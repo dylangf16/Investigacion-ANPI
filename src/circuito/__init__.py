@@ -24,7 +24,6 @@ from .ensamblador import Ensamblador
 from .newton import (
     Resultado,
     newton_amortiguado,
-    newton_continuacion,
     newton_puro,
 )
 from .red import Red
@@ -38,7 +37,6 @@ __all__ = [
     "Resultado",
     "newton_puro",
     "newton_amortiguado",
-    "newton_continuacion",
     "voltaje_overflow",
     "VT_300K",
     "IS_DEFECTO",

@@ -6,7 +6,6 @@ from circuito import (
     Ensamblador,
     Red,
     newton_amortiguado,
-    newton_continuacion,
     newton_puro,
 )
 from circuito.simbolico import punto_operacion_un_diodo, verificar_jacobiana
@@ -45,22 +44,6 @@ def test_newton_amortiguado_resuelve_circuito_pequeno():
     # Caídas de diodo en rango físico (~0.6 a 0.75 V).
     v = ens.voltajes_nodales(r.x)
     assert 0.5 < v["N1"] - v["N3"] < 0.8
-
-
-def test_continuacion_resuelve_donde_puro_falla():
-    from pequeno import construir
-    ens = Ensamblador(construir())
-    r = newton_continuacion(ens)
-    assert r.exito
-    assert np.linalg.norm(ens.F(r.x)) < 1e-7
-
-
-def test_amortiguado_y_continuacion_dan_misma_solucion():
-    from pequeno import construir
-    ens = Ensamblador(construir())
-    ra = newton_amortiguado(ens)
-    rc = newton_continuacion(ens)
-    assert np.allclose(ra.x, rc.x, atol=1e-6)
 
 
 def test_jacobiana_simbolica_vs_estampada():

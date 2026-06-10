@@ -8,8 +8,8 @@ El planteamiento matemático, la motivación y las referencias están en
 [docs/explicacion.md](docs/explicacion.md). En una frase: el análisis nodal con
 la ecuación de Shockley produce un sistema no lineal `F(x) = 0`; la no
 linealidad exponencial lo vuelve mal condicionado y hace que el Newton "puro"
-del Avance 2 se desborde (overflow). El aporte es estabilizarlo (amortiguamiento
-/ continuación) y resolver la Jacobiana dispersa en cada iteración.
+del Avance 2 se desborde (overflow). El aporte es estabilizarlo (amortiguamiento)
+y resolver la Jacobiana dispersa en cada iteración.
 
 ## Estructura
 
@@ -20,14 +20,15 @@ src/circuito/          Paquete principal
   red.py               Netlist: nodos, fuentes, mapeo de incógnitas
   ensamblador.py       Construye F(x) y la Jacobiana dispersa (COO -> CSC)
   lineal.py            Solver lineal disperso sin invertir (LU dispersa / GMRES+ILU)
-  newton.py            Newton puro, amortiguado (line search) y continuación
+  newton.py            Newton puro y amortiguado (line search)
   simbolico.py         SymPy: verifica la Jacobiana y forma cerrada (Lambert W)
 ejemplos/
   pequeno.py           Circuito de 4 nodos del documento
+  escalera.py          Escalera R-diodo de N nodos (Jacobiana tridiagonal)
   exigente.py          Multiplicador de 6 nodos / 5 diodos con diodo de realimentación
   rejilla.py           Rejilla resistiva 2D con diodos (16 a miles de incógnitas)
 experimentos/
-  comparar_metodos.py  Tabla puro vs amortiguado vs continuación + condicionamiento
+  comparar_metodos.py  Tabla puro vs amortiguado + condicionamiento
 tests/                 Pruebas con pytest (incluye validación simbólica)
 ```
 
@@ -86,13 +87,12 @@ python experimentos/comparar_metodos.py
 pytest -q
 ```
 
-## Los tres métodos
+## Los dos métodos
 
 | Función | Técnica numérica | Comportamiento |
 | --- | --- | --- |
 | `newton_puro` | Newton-Raphson del Avance 2 (paso completo) | Se desborda desde un arranque frío: la Jacobiana se vuelve singular (`inf`) |
 | `newton_amortiguado` | Newton con búsqueda de línea (backtracking, Armijo) | Converge; evita el overflow frenando el paso |
-| `newton_continuacion` | Source stepping / homotopía | Red de seguridad: rampa las fuentes de 0 a su valor real |
 
 El sistema lineal de cada iteración se resuelve con `lineal.resolver` (LU
 dispersa por defecto, GMRES+ILU para mallas muy grandes); nunca se calcula la
@@ -101,7 +101,7 @@ inversa de la Jacobiana.
 ## Resultado del experimento (resumen)
 
 Newton puro **falla** (overflow → Jacobiana singular), mientras amortiguado
-converge en pocas iteraciones y la continuación también; el número de condición
+converge en pocas iteraciones; el número de condición
 de la Jacobiana empeora ~90× entre los diodos apagados y el punto de operación.
 La rejilla escala a miles de incógnitas (p. ej. 6400 nodos en <1 s) gracias a la
 Jacobiana dispersa de 5 puntos.
