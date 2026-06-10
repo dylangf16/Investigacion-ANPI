@@ -36,7 +36,6 @@ from circuito import (  # noqa: E402
     ModeloDiodo,
     Red,
     newton_amortiguado,
-    newton_continuacion,
     newton_puro,
 )
 
@@ -80,11 +79,6 @@ def main() -> None:
     print("\n--- Newton amortiguado ---")
     r = newton_amortiguado(ens)
     print(r)
-
-    if not r.exito:
-        print("\n--- Continuación (red de seguridad) ---")
-        r = newton_continuacion(ens)
-        print(r)
 
     if r.exito:
         print("\nVoltajes nodales (V):")

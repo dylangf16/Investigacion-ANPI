@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from circuito import Ensamblador, newton_amortiguado, newton_continuacion, newton_puro
+from circuito import Ensamblador, newton_amortiguado, newton_puro
 from circuito.simbolico import verificar_jacobiana
 
 
@@ -22,15 +22,6 @@ def test_newton_amortiguado_converge():
     r = newton_amortiguado(ens)
     assert r.exito
     assert np.linalg.norm(ens.F(r.x)) < 1e-8
-
-
-def test_continuacion_tambien_converge():
-    from exigente import construir
-    ens = Ensamblador(construir())
-    r = newton_continuacion(ens)
-    assert r.exito
-    ra = newton_amortiguado(ens)
-    assert np.allclose(r.x, ra.x, atol=1e-6)
 
 
 def test_divisor_mantiene_d5_en_inversa():

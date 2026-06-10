@@ -1,4 +1,4 @@
-"""Experimento numérico de la rúbrica: Newton puro vs amortiguado vs continuación.
+"""Experimento numérico de la rúbrica: Newton puro vs amortiguado.
 
 Genera la tabla que pide la sección de experimentos del paper: para cada método
 reporta convergencia, número de iteraciones, residuo final y tiempo.  También
@@ -17,7 +17,6 @@ import numpy as np  # noqa: E402
 from circuito import (  # noqa: E402
     Ensamblador,
     newton_amortiguado,
-    newton_continuacion,
     newton_puro,
 )
 from circuito import lineal  # noqa: E402
@@ -39,7 +38,7 @@ def comparar(nombre: str, red) -> None:
     print(f"\n=== {nombre}  ({red.n_incognitas} incógnitas) ===")
     print(f"{'Método':<22} {'Estado':<9} {'iter':>5} {'||F||':>12} {'t (ms)':>10}")
     print("-" * 62)
-    for solver in (newton_puro, newton_amortiguado, newton_continuacion):
+    for solver in (newton_puro, newton_amortiguado):
         print(_fila(solver(ens)))
 
 

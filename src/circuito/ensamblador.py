@@ -3,10 +3,6 @@
 El ensamblador recorre los dispositivos de la :class:`~circuito.red.Red` y deja
 que cada uno se "estampe".  La Jacobiana se construye en formato disperso COO y
 se convierte a CSC para que el solucionador lineal la factorice sin invertirla.
-
-El factor ``escala_fuente`` permite hacer *source stepping* (homotopía): se
-escalan los voltajes de las fuentes para ir desde un problema fácil
-(``escala=0``) hasta el real (``escala=1``).
 """
 from __future__ import annotations
 
@@ -23,7 +19,6 @@ class Ensamblador:
         self.red = red
         red.finalizar()
         self.n = red.n_incognitas
-        self.escala_fuente: float = 1.0
 
         # Estado interno reutilizado durante un stamping (evita reasignar).
         self._x: np.ndarray | None = None
@@ -38,7 +33,7 @@ class Ensamblador:
         if nodo == self.red.tierra:
             return 0.0
         if nodo in self.red.fuentes:
-            return self.escala_fuente * self.red.fuentes[nodo]
+            return self.red.fuentes[nodo]
         return float(self._x[self.red.indice[nodo]])
 
     def aporte_F(self, nodo: object, valor: float) -> None:
@@ -97,7 +92,7 @@ class Ensamblador:
         self._x = np.asarray(x, dtype=float)
         resultado: dict[object, float] = {self.red.tierra: 0.0}
         for nodo, V in self.red.fuentes.items():
-            resultado[nodo] = self.escala_fuente * V
+            resultado[nodo] = V
         for nodo, idx in self.red.indice.items():
             resultado[nodo] = float(self._x[idx])
         return resultado

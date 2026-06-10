@@ -6,7 +6,7 @@ La columna izquierda se alimenta de una fuente ``Vs`` y la derecha va a tierra,
 ambas a través de resistencias.  En una fracción de los nodos se cuelga un
 diodo a tierra, que introduce la no linealidad exponencial.
 
-Para ``n=4`` da 16 incógnitas (el tamaño recomendado).  Subiendo ``n`` se
+Para ``n=15`` da 225 incógnitas (tamaño exigente).  Subiendo ``n`` se
 obtienen miles de incógnitas con Jacobiana dispersa.
 """
 from __future__ import annotations
@@ -21,11 +21,10 @@ from circuito import (  # noqa: E402
     ModeloDiodo,
     Red,
     newton_amortiguado,
-    newton_continuacion,
 )
 
 
-def construir_rejilla(n: int = 4, *, Vs: float = 5.0, R: float = 1e3,
+def construir_rejilla(n: int = 15, *, Vs: float = 5.0, R: float = 1e3,
                       R_borde: float = 1e3, fraccion_diodos: float = 0.5,
                       modelo: ModeloDiodo | None = None) -> Red:
     """Construye la rejilla ``n x n`` con diodos de fuga a tierra.
@@ -71,8 +70,6 @@ def main() -> None:
         red = construir_rejilla(n)
         ens = Ensamblador(red)
         r = newton_amortiguado(ens)
-        if not r.exito:  # red de seguridad
-            r = newton_continuacion(ens)
         print(f"n={n:>3}  incógnitas={red.n_incognitas:>4}  {r}")
 
 

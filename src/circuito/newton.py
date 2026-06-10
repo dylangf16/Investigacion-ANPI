@@ -1,16 +1,13 @@
 """Métodos de Newton-Raphson para ``F(x) = 0``.
 
-Tres variantes, en orden creciente de robustez:
+Dos variantes, en orden creciente de robustez:
 
 #. :func:`newton_puro` — el paso completo del Avance 2.  Se desborda
    (``inf``/``nan``) en cuanto un paso empuja una unión más allá de ~18 V.
 #. :func:`newton_amortiguado` — Newton con búsqueda de línea (backtracking).
    Frena el paso hasta que ``||F||`` decrece; evita el overflow.
-#. :func:`newton_continuacion` — *source stepping* (homotopía): rampa las
-   fuentes de 0 a su valor real resolviendo con Newton amortiguado en cada
-   nivel, partiendo siempre de la solución anterior.
 
-Todas resuelven el sistema lineal con :mod:`circuito.lineal` (sin invertir).
+Ambas resuelven el sistema lineal con :mod:`circuito.lineal` (sin invertir).
 """
 from __future__ import annotations
 
@@ -34,7 +31,6 @@ class Resultado:
     historial_residuo: list[float] = field(default_factory=list)
     tiempo: float = 0.0
     mensaje: str = ""
-    iteraciones_lineales: int = 0  # pasos internos (p.ej. niveles de homotopía)
 
     @property
     def residuo_final(self) -> float:
@@ -151,47 +147,3 @@ def newton_amortiguado(ens: Ensamblador, x0: np.ndarray | None = None, *,
 
     return Resultado("Newton amortiguado", False, x, max_iter, hist,
                      time.perf_counter() - t0, "no convergió en max_iter")
-
-
-# ---------------------------------------------------------------------------
-# 3. Continuación por source stepping (homotopía)
-# ---------------------------------------------------------------------------
-def newton_continuacion(ens: Ensamblador, x0: np.ndarray | None = None, *,
-                        tol: float = 1e-9, max_iter: int = 100,
-                        metodo_lineal: str = "lu",
-                        niveles: int | None = None) -> Resultado:
-    """Rampa las fuentes de 0 a su valor real (homotopía / source stepping).
-
-    En cada nivel ``escala in [0, 1]`` se resuelve con Newton amortiguado
-    arrancando de la solución del nivel anterior.  Es la red de seguridad
-    cuando ni el amortiguamiento solo logra arrancar desde frío.
-    """
-    x = np.zeros(ens.n) if x0 is None else np.array(x0, dtype=float)
-    hist: list[float] = []
-    t0 = time.perf_counter()
-    escala_original = ens.escala_fuente
-
-    pasos = niveles if niveles is not None else 8
-    escalas = np.linspace(1.0 / pasos, 1.0, pasos)
-
-    total_iter = 0
-    try:
-        for nivel, esc in enumerate(escalas, start=1):
-            ens.escala_fuente = float(esc)
-            sub = newton_amortiguado(ens, x, tol=tol, max_iter=max_iter,
-                                     metodo_lineal=metodo_lineal)
-            total_iter += sub.iteraciones
-            hist.extend(sub.historial_residuo)
-            x = sub.x
-            if not sub.exito:
-                return Resultado("Continuación", False, x, total_iter, hist,
-                                 time.perf_counter() - t0,
-                                 f"falló en nivel {nivel} (escala={esc:.3f}): "
-                                 f"{sub.mensaje}", iteraciones_lineales=nivel)
-    finally:
-        ens.escala_fuente = escala_original
-
-    return Resultado("Continuación", True, x, total_iter, hist,
-                     time.perf_counter() - t0,
-                     f"convergió en {pasos} niveles de homotopía",
-                     iteraciones_lineales=pasos)
